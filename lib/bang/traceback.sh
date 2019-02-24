@@ -3,8 +3,13 @@ set -euo pipefail
 
 _BANG_TRACEBACK_DEFAULT_NAME="default"
 
+bang::traceback() {
+  bang::traceback::create
+  bang::traceback::print
+}
+
 bang::traceback::new() {
-  local -r tb_name="${1:-$_BANG_TRACEBACK_DEFAULT_NAME}}"
+  local -r tb_name="${1:-${_BANG_TRACEBACK_DEFAULT_NAME}}"
 
   declare -ga "_bang_traceback_${tb_name}_funcname"
   declare -ga "_bang_traceback_${tb_name}_lineno"
@@ -14,7 +19,7 @@ bang::traceback::new() {
 
 # Destroy all objects associated with the traceback.
 bang::traceback::destroy() {
-  local -r tb_name="${1:-$_BANG_TRACEBACK_DEFAULT_NAME}}"
+  local -r tb_name="${1:-${_BANG_TRACEBACK_DEFAULT_NAME}}"
 
   unset "_bang_traceback_${tb_name}_funcname"
   unset "_bang_traceback_${tb_name}_lineno"
@@ -23,7 +28,7 @@ bang::traceback::destroy() {
 }
 
 bang::traceback::exists() {
-  local -r tb_name="${1:-$_BANG_TRACEBACK_DEFAULT_NAME}}"
+  local -r tb_name="${1:-${_BANG_TRACEBACK_DEFAULT_NAME}}"
 
   bang::helpers::is_defined "_bang_traceback_${tb_name}_funcname" \
     || bang::helpers::is_defined "_bang_traceback_${tb_name}_lineno" \
@@ -32,8 +37,8 @@ bang::traceback::exists() {
 }
 
 # Save a copy of the Bash variables reflecting the current traceback.
-bang::traceback::save() {
-  local -r tb_name="${1:-$_BANG_TRACEBACK_DEFAULT_NAME}}"
+bang::traceback::create() {
+  local -r tb_name="${1:-${_BANG_TRACEBACK_DEFAULT_NAME}}"
 
   bang::traceback::new "$tb_name"
 
@@ -86,22 +91,21 @@ bang::traceback::_fileline() {
 
 # Print the named traceback.
 bang::traceback::print() {
-  local -r tb_name="${1:-$_BANG_TRACEBACK_DEFAULT_NAME}}"
-  local -r skip_frames="${2:-0}"
-  local -r depth="$(("${#BASH_SOURCE[@]}" - 1))"
-  local -r stop="$(( 1 + "$skip_frames" ))"
+  local -r tb_name="${1:-${_BANG_TRACEBACK_DEFAULT_NAME}}"
+  local -r skip_frames="${2:-1}"
   local -n tb_funcname="_bang_traceback_${tb_name}_funcname"
   local -n tb_lineno="_bang_traceback_${tb_name}_lineno"
   local -n tb_source="_bang_traceback_${tb_name}_source"
-  local func lineno source line
+  local i funcname lineno source line
 
-  for i in $(seq "$depth" -1 "$stop"); do
-    func="${tb_funcname[$i]}"
-    lineno="${tb_lineno[$(($i-1))]}"
-    file="${tb_source[$i]}"
-    line="$(fileline "$file" "$lineno")"
 
-    echo "  File '$file', line $lineno, in $func"
+  for ((i=0; i < "${#tb_funcname[@]}" - "$skip_frames"; i++)); do
+    funcname="${tb_funcname[$i]}"
+    lineno="${tb_lineno[$i]}"
+    source="${tb_source[$i]}"
+    line="$(bang::traceback::_fileline "$source" "$lineno")"
+
+    echo "- $source:$funcname:$lineno"
     echo "    $line"
   done
 }
