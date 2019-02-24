@@ -75,10 +75,6 @@ bang::traceback::create() {
     tb_source+=("$source")
     tb_fileline+=("$fileline")
   done
-
-  #funcname=("${FUNCNAME[@]::${#FUNCNAME[@]}-1}")
-  #lineno=("${BASH_LINENO[@]::${#BASH_LINENO[@]}-1}")
-  #source=("${BASH_SOURCE[@]::${#BASH_SOURCE[@]}-1}")
 }
 
 # Get the given line number of the file with leading and trailing
