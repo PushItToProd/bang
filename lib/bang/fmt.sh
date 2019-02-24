@@ -12,8 +12,21 @@ _bang_fmt_bgcolor_info="$(tput setab 4)"
 _bang_fmt_reset="$(tput sgr0)"
 
 bang::fmt::error() {
-  echo "${_bang_fmt_bold}${_bang_fmt_bgcolor_error}[error]${_bang_fmt_reset} "\
-       "${_bang_fmt_bold}${_bang_fmt_color_error}$*${_bang_fmt_reset}"
+  local -r prefix="$1"
+  local -r msg="${2:-}"
+  local -r details="${3:-}"
+  if [[ -n "$msg" ]]; then
+    # Prefix and message set - print both.
+    echo "${_bang_fmt_bold}${_bang_fmt_bgcolor_error}${prefix}${_bang_fmt_reset} "\
+         "${_bang_fmt_bold}${_bang_fmt_color_error}${msg}${_bang_fmt_reset}"
+  else
+    # No prefix set - just print the message.
+    echo "${_bang_fmt_bold}${_bang_fmt_color_error}${msg}${_bang_fmt_reset}"
+  fi
+  if [[ -n "$details" ]]; then
+    # Details set - print them on a new line.
+    echo "${_bang_fmt_color_error}${details}${_bang_fmt_reset}"
+  fi
 }
 
 bang::fmt::warn() {

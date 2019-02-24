@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
 bang::err::internal() {
-  fmt::error "[INTERNAL ERROR] $@"
+  bang::fmt::error "[INTERNAL ERROR]" "$@"
   exit 99
 }
 
 bang::err::user() {
-  fmt::error "$@"
+  bang::traceback --skip-frames 1
+  bang::fmt::error "[error]" "$@"
   exit 1
 }
