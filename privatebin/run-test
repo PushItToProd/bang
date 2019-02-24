@@ -1,1 +1,14 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
+: "${BANG_DEBUG:=0}"  # set BANG_DEBUG to the lowest level if it isn't set
+
+if [[ "${BASE_DIR+defined}" != "defined" ]]; then
+  echo "error: BASE_DIR is not defined, probably because you " \
+       "invoked run-test directly" >&2
+  exit 1
+fi
+
+source "$BASE_DIR/lib/bootstrap.sh"
+
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && bang::runner::main
