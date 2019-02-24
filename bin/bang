@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+: "${BANG_DEBUG:=0}"  # set BANG_DEBUG to the lowest level if it isn't set
+
 # get the full directory name of the given file
 bangentrypoint::getdir() {
   cd -P "$(dirname "$1")" >/dev/null 2>&1
@@ -20,11 +22,12 @@ bangentrypoint::getsource() {
   printf "$(bangentrypoint::getdir "$SOURCE")"
 }
 
-BANG_DIR="$(bangentrypoint::getsource)"
+export SCRIPT_DIR="$(bangentrypoint::getsource)"
+(( "$BANG_DEBUG" >= 50 )) && echo "SCRIPT_DIR=$SCRIPT_DIR" >&2
 
-for srcfile in "${BANG_DIR}/src/"*.sh; do
-  [[ "$BANG_DEBUG" -gt 50 ]] && echo "bangentrypoint: sourcing $srcfile"
-  source "$srcfile"
-done
+export BASE_DIR="$(bangentrypoint::getdir "$SCRIPT_DIR/../x")"
+(( "$BANG_DEBUG" >= 50 )) && echo "BASE_DIR=$BASE_DIR" >&2
 
-bang::main "$@"
+source "$BASE_DIR/lib/bootstrap.sh"
+
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && bang::main "$@"
