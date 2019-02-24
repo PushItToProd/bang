@@ -13,5 +13,6 @@ bar() {
 }
 
 baz() {
-  bang::traceback
+  bang::traceback --skip-frames 1
+  #bang::traceback
 }

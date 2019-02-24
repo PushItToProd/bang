@@ -1,20 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-_BANG_TRACEBACK_DEFAULT_NAME="default"
+declare _BANG_TRACEBACK_DEFAULT_NAME="default"
+declare _BANG_LAST_TRACEBACK
 
 bang::traceback() {
-  bang::traceback::create
-  bang::traceback::print
+  bang::traceback::create "$@"
+  bang::traceback::print "$_BANG_LAST_TRACEBACK"
 }
 
 bang::traceback::new() {
-  local -r tb_name="${1:-${_BANG_TRACEBACK_DEFAULT_NAME}}"
+  local tb_name="${1:-}"
+  if [[ "$tb_name" == -* ]] || [[ "$tb_name" == "" ]]; then
+    # tb_name is a flag, so no name was set
+    tb_name="$_BANG_TRACEBACK_DEFAULT_NAME"
+  else
+    shift || true
+  fi
+  _BANG_LAST_TRACEBACK="$tb_name"
 
   declare -ga "_bang_traceback_${tb_name}_funcname"
   declare -ga "_bang_traceback_${tb_name}_lineno"
   declare -ga "_bang_traceback_${tb_name}_source"
   declare -ga "_bang_traceback_${tb_name}_fileline"
+  declare -g "_bang_traceback_${tb_name}_skip_frames"=0
+
+  local -n skip_frames="_bang_traceback_${tb_name}_skip_frames"
+
+  while (( "$#" > 0 )); do
+    case "$1" in
+      --skip-frames)
+        shift
+        skip_frames="$1"
+        ;;
+      *)
+        bang::err::internal "unrecognized argument to traceback: $1"
+        ;;
+    esac
+    shift
+  done
 }
 
 # Destroy all objects associated with the traceback.
@@ -25,6 +49,7 @@ bang::traceback::destroy() {
   unset "_bang_traceback_${tb_name}_lineno"
   unset "_bang_traceback_${tb_name}_source"
   unset "_bang_traceback_${tb_name}_fileline"
+  unset "_bang_traceback_${tb_name}_skip_frames"
 }
 
 bang::traceback::exists() {
@@ -38,21 +63,21 @@ bang::traceback::exists() {
 
 # Save a copy of the Bash variables reflecting the current traceback.
 bang::traceback::create() {
-  local -r tb_name="${1:-${_BANG_TRACEBACK_DEFAULT_NAME}}"
-
-  bang::traceback::new "$tb_name"
+  bang::traceback::new "$@"
+  local -r tb_name="${_BANG_LAST_TRACEBACK}"
 
   local -n tb_funcname="_bang_traceback_${tb_name}_funcname"
   local -n tb_lineno="_bang_traceback_${tb_name}_lineno"
   local -n tb_source="_bang_traceback_${tb_name}_source"
   local -n tb_fileline="_bang_traceback_${tb_name}_fileline"
+  local -n tb_skip_frames="_bang_traceback_${tb_name}_skip_frames"
 
   local funcname lineno source fileline
 
   # Reverse the arrays so that the most recent invocation comes last.
   # We start at i=1 because this function should not be included in
   # the traceback.
-  for ((i="${#BASH_SOURCE[@]}"-1; i>0; i--)); do
+  for ((i="${#BASH_SOURCE[@]}"-1; i > "${tb_skip_frames}"; i--)); do
     source="${BASH_SOURCE[$i]}"
 
     # BASH_LINENO is offset from FUNCNAME and BASH_SOURCE because it's

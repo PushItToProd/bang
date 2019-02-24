@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+: "${BANG_DEBUG:=0}"  # set BANG_DEBUG to the lowest level if it isn't set
+
 # get the full directory name of the given file
 bangentrypoint::getdir() {
   cd -P "$(dirname "$1")" >/dev/null 2>&1
@@ -21,13 +23,12 @@ bangentrypoint::getsource() {
 }
 
 SCRIPT_DIR="$(bangentrypoint::getsource)"
-[[ "${BANG_DEBUG:-0}" -gt 50 ]] && echo "SCRIPT_DIR=$SCRIPT_DIR"
+(( "$BANG_DEBUG" >= 50 )) && echo "SCRIPT_DIR=$SCRIPT_DIR"
 BANG_DIR="$(bangentrypoint::getdir "$SCRIPT_DIR/../lib/bang/x")"
-[[ "${BANG_DEBUG:-0}" -gt 50 ]] && echo "BANG_DIR=$BANG_DIR"
-
+(( "$BANG_DEBUG" >= 50 )) && echo "BANG_DIR=$BANG_DIR"
 
 for srcfile in "${BANG_DIR}/"*.sh; do
-  [[ "${BANG_DEBUG:-0}" -gt 50 ]] && echo "bangentrypoint: sourcing $srcfile" >&2
+  (( "$BANG_DEBUG" >= 50 )) && echo "bangentrypoint: sourcing $srcfile" >&2
   source "$srcfile"
 done
 
