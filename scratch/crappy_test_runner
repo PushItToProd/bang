@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly GREEN="$(tput setaf 2)"
+readonly RED="$(tput setaf 1)"
+readonly RESET="$(tput sgr0)"
+
+__TESTCASE_NAME=
+
+declare -a FAILURES=()
+declare -a FAILED_ASSERTIONS=()
+
+run_test() {
+  local -r func="$1"
+  local -r name="$2"
+
+  if "$func"; then
+    printf "${GREEN}.${RESET}"
+  else
+    printf "${RED}F${RESET}"
+    FAILURES+=("$name")
+  fi
+}
+
+@test() {
+  __TESTCASE_NAME="$1"
+  FAILED_ASSERTIONS=()
+}
+
+@endtest() {
+  run_test testcase "$__TESTCASE_NAME"
+}
+
+@assert() {
+  local assertmsg=""
+  local -a testcmd=()
+  local testend
+  local syntaxerr
+  if [[ "$1" == "[" ]]; then
+    testend="]"
+  elif [[ "$1" == "[[" ]]; then
+    testend="]]"
+  else
+    echo "error: @assert must start with a test condition" >&2
+    echo "@assert usage: @assert [ TEST ] MSG" >&2
+    exit 1
+  fi
+  shift
+
+  until [[ "$1" == "$testend" ]] ; do
+    testcmd+=("$1")
+    shift || {
+      syntaxerr=1
+      break
+    }
+  done
+  if [[ "$syntaxerr" == 1 ]]; then
+    echo "error: @assert did not have a complete test. $testend not found" >&2
+    exit 1
+  fi
+  shift
+
+  if [[ -n "$1" ]]; then
+    assertmsg="$1"
+  else
+    assertmsg="${testcmd[@]}"
+  fi
+
+  if ! test "${testcmd[@]}"; then
+    echo "ASSERTION FAILED: $assertmsg"
+    FAILED_ASSERTIONS+=("$assertmsg")
+  fi
+}
+
+print_failures() {
+  echo
+  if (( "${#FAILURES[@]}" )); then
+    echo "Failures occurred"
+    for f in "${FAILURES[@]}"; do
+      echo "- $f"
+    done
+  fi
+}
+
+main() {
+  local -r testfile="$1"
+  source "$testfile"
+  print_failures
+}
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && main "$@"
