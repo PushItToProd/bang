@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
 
-declare _BANG_TEST_FILE
+readonly _BANG_COMMAND_PREFIX="bang::commands::"
 
-declare _BANG_MODE
-declare _BANG_CMD
+declare _BANG_TEST_FILE
+declare _BANG_COMMAND_NAME
+declare _BANG_COMMAND_ARGS
+declare _BANG_COMMAND_FUNC
+declare -a _BANG_ARGS
 
 bang::main() {
-  if [[ "${1:-}" == "--internal" ]]; then
-    shift
-    bang::main::parse_args_internal "$@"
-  else
-    bang::main::parse_args_external "$@"
-  fi
+  bang::main::parse_args "$@"
+  bang::main::exec
+}
+
+bang::main::exec() {
+  "${_BANG_COMMAND_FUNC}" "${_BANG_COMMAND_ARGS[@]}"
 }
 
 bang::main::print_about() {
@@ -31,29 +34,18 @@ bang::main::err::usage() {
   bang::err::user "invalid arguments: $err" "$(bang::main::print_usage)"
 }
 
-bang::main::parse_args_external() {
-  _BANG_MODE=external
-  _BANG_CMD=exectestfile
+bang::main::parse_args() {
+  _BANG_ARGS=("$@")
+  _BANG_COMMAND_NAME="${1:-}"
+  shift || true
+  _BANG_COMMAND_FUNC="${_BANG_COMMAND_PREFIX}${_BANG_COMMAND_NAME}"
+  _BANG_COMMAND_ARGS=("$@")
 
-  _BANG_TEST_FILE="${1:-}"
-  if [[ -z "$_BANG_TEST_FILE" ]]; then
-    bang::main::err::usage "a test file must be specified"
+  if [[ -z "$_BANG_COMMAND_NAME" ]]; then
+    bang::main::err::usage "you must provide a command"
   fi
-}
 
-bang::main::parse_args_internal() {
-  local -r cmd="$1"
-  shift
-  _BANG_MODE=internal
-  case "$cmd" in
-    --quicktest)
-      source "${_BANG_INSTALL_PATH}/quicktests/${1}.sh"
-      ;;
-    run-tests)
-      _BANG_CMD=run-tests
-      ;;
-    *)
-      bang::err::internal "invalid internal mode command: $cmd"
-      ;;
-  esac
+  if ! bang::helpers::func_exists "$_BANG_COMMAND_FUNC"; then
+    bang::main::err::usage "the command '$_BANG_COMMAND_NAME' does not exist"
+  fi
 }
