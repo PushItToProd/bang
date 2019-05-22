@@ -1,6 +1,7 @@
 # bang
 
-A test library for bash.
+An experimental test library for bash. Alternatively, a testing ground for me to
+push the limits of convoluted bash scripting.
 
 ## Project layout
 
