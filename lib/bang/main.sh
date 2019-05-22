@@ -17,7 +17,7 @@ bang::main::exec() {
   "${_BANG_COMMAND_FUNC}" "${_BANG_COMMAND_ARGS[@]}"
 }
 
-bang::main::print_about() {
+bang::main::print_version() {
   cat <<EOF
 bang: $_BANG_VERSION
 EOF
@@ -25,7 +25,12 @@ EOF
 
 bang::main::print_usage() {
   cat <<EOF
-Usage: $_BANG_SCRIPT_NAME <testfile>
+Usage: $_BANG_SCRIPT_NAME [command] [args...]
+
+Commands:
+    run [testfile]
+    about
+    help
 EOF
   }
 

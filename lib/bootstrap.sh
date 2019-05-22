@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
+# Load all bang modules from the bang module path.
 set -euo pipefail
+
 shopt -s nullglob
 
 bangbootstrap::getdir() {
@@ -9,7 +11,7 @@ bangbootstrap::getdir() {
 
 (( "$BANG_DEBUG" >= 50 )) && echo "bootstrap.sh: Loading modules" >&2
 
-export _BANG_MODULE_PATH="$(bangbootstrap::getdir "$_BANG_INSTALL_PATH/lib/bang/x")"
+export _BANG_MODULE_PATH="$(bang::helpers::getdir "$_BANG_INSTALL_PATH/lib/bang/x")"
 (( "$BANG_DEBUG" >= 50 )) && echo "bootstrap.sh: _BANG_MODULE_PATH=$_BANG_MODULE_PATH" >&2
 
 for srcfile in "${_BANG_MODULE_PATH}/"*.sh; do

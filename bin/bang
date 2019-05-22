@@ -3,11 +3,12 @@ set -euo pipefail
 
 : "${BANG_DEBUG:=0}"  # set BANG_DEBUG to the lowest level if it isn't set
 
+export _BANG_EXE_PATH="$0"
 export _BANG_SCRIPT_NAME="$(basename "$0")"
 export _BANG_VERSION="0.0.0"
 
 # get the full directory name of the given file
-bangentrypoint::getdir() {
+bang::helpers::getdir() {
   cd -P "$(dirname "$1")" >/dev/null 2>&1
   pwd
 }
@@ -17,18 +18,18 @@ bangentrypoint::getdir() {
 bangentrypoint::getsource() {
   SOURCE="${BASH_SOURCE[0]}"
   while [[ -h "$SOURCE" ]]; do
-    DIR="$(bangentrypoint::getdir "$SOURCE")"
+    DIR="$(bang::helpers::getdir "$SOURCE")"
     SOURCE="$(readlink "$SOURCE")"
     # handle relative symlinks
     [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
   done
-  printf "$(bangentrypoint::getdir "$SOURCE")"
+  printf "$(bang::helpers::getdir "$SOURCE")"
 }
 
 export _BANG_SCRIPT_PATH="$(bangentrypoint::getsource)"
 (( "$BANG_DEBUG" >= 50 )) && echo "bangentrypoint: _BANG_SCRIPT_PATH=$_BANG_SCRIPT_PATH" >&2
 
-export _BANG_INSTALL_PATH="$(bangentrypoint::getdir "$_BANG_SCRIPT_PATH/../x")"
+export _BANG_INSTALL_PATH="$(bang::helpers::getdir "$_BANG_SCRIPT_PATH/../x")"
 (( "$BANG_DEBUG" >= 50 )) && echo "bangentrypoint: _BANG_INSTALL_PATH=$_BANG_INSTALL_PATH" >&2
 
 source "$_BANG_INSTALL_PATH/lib/bootstrap.sh"

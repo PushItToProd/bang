@@ -8,8 +8,39 @@ bang::commands::internal::quicktest() {
   bash "${_BANG_INSTALL_PATH}/quicktests/$testname.sh"
 }
 
+bang::commands::internal::run_test() {
+  local -r testfile="$1"
+  local -r testname="$2"
+
+  bang::runner::run "$testfile" "$testname"
+}
+
+bang::commands::internal::run_testfile() {
+  local -r testfile="$1"
+
+  bang::exec internal load_tests "$testfile" \
+    | bang::exec internal run_tests "$testfile" \
+    | bang::exec internal report_test_results
+}
+
 bang::commands::internal::run_tests() {
-  bang::err::internal "not implemented"
+  local -r testfile="$1"
+
+  while read testname; do
+    bang::exec internal run_test "$testfile" "$testname"
+  done
+}
+
+bang::commands::internal::load_tests() {
+  local -r testfile="$1"
+
+  bang::loader::load_tests "$testfile"
+  bang::loader::list_tests
+}
+
+bang::commands::internal::report_test_results() {
+  bang::fmt::warn "report_test_results not yet implemented"
+  cat
 }
 
 bang::commands::internal() {
